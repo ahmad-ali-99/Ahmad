@@ -96,18 +96,30 @@
   textarea { resize: vertical; min-height: 68px; }
   .hint { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
 
-  .sons-box { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-  .son-row { display: flex; gap: 8px; align-items: center; }
-  .son-row .num {
+  .sons-box { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .son-card {
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px;
+    background: var(--field); display: flex; flex-direction: column; gap: 8px;
+  }
+  .son-head, .phone-row { display: flex; gap: 8px; align-items: center; }
+  .son-head .num {
     flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
     background: var(--accent-soft); color: var(--accent-deep);
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums;
   }
-  .son-row .rm {
+  .son-head .rm {
     flex-shrink: 0; border: none; background: var(--err-bg); color: var(--err-ink);
     width: 34px; height: 34px; border-radius: 9px; cursor: pointer; font-size: 15px;
   }
+  .son-card input { background: var(--card); }
+  .btn-pick {
+    flex-shrink: 0; border: 1.5px solid var(--accent); background: var(--accent-soft);
+    color: var(--accent-deep); border-radius: 9px; cursor: pointer;
+    font: inherit; font-size: 13px; font-weight: 700; padding: 10px 12px;
+    white-space: nowrap;
+  }
+  .btn-pick:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   .btn-add {
     margin-top: 10px; background: var(--accent-soft); color: var(--accent-deep);
     border: 1.5px dashed var(--accent); border-radius: 10px;
@@ -217,11 +229,14 @@
       <input type="text" id="fullName" required placeholder="مثال: أحمد علي حسين محمد السوره ميري">
 
       <label for="phone">رقم هاتف رب الأسرة <span class="req">*</span></label>
-      <input type="tel" id="phone" required inputmode="numeric" placeholder="مثال: 07701234567">
+      <div class="phone-row">
+        <input type="tel" id="phone" required inputmode="numeric" placeholder="مثال: 07701234567">
+        <button type="button" class="btn-pick pick-contact" data-target="phone">📇 من جهات الاتصال</button>
+      </div>
       <div class="hint">رقم عراقي يبدأ بـ 07 (11 رقم)</div>
 
-      <label>أسماء أولاد رب الأسرة (الذكور)</label>
-      <div class="hint" style="margin:0 0 6px">اكتب اسم كل ولد، واضغط «إضافة ولد» لإضافة أكثر. إذا ماكو أولاد اتركها فارغة.</div>
+      <label>أولاد رب الأسرة (الذكور)</label>
+      <div class="hint" style="margin:0 0 6px">اكتب اسم كل ولد ورقمه إن وجد، واضغط «إضافة ولد» لإضافة أكثر. إذا ماكو أولاد اتركها فارغة.</div>
       <div class="sons-box" id="sonsBox"></div>
       <button type="button" class="btn-add" id="btnAddSon">➕ إضافة ولد</button>
 
@@ -393,37 +408,80 @@
     alert('✅ تم تغيير الرمز');
   });
 
+  /* ===== اختيار الرقم من جهات اتصال الهاتف (Contact Picker API) ===== */
+  var CONTACTS_OK = ('contacts' in navigator) && ('select' in navigator.contacts);
+
+  function cleanPhone(raw) {
+    /* بس الرقم: نشيل الرموز والفراغات، ونحول 964+ إلى صيغة محلية تبدأ بـ 0 */
+    var d = String(raw).replace(/\D/g, '');
+    if (d.indexOf('00964') === 0) d = '0' + d.slice(5);
+    else if (d.indexOf('964') === 0) d = '0' + d.slice(3);
+    return d;
+  }
+
+  function pickContact(targetInput) {
+    if (!CONTACTS_OK) return;
+    navigator.contacts.select(['tel'], { multiple: false }).then(function (list) {
+      if (list && list.length && list[0].tel && list[0].tel.length) {
+        targetInput.value = cleanPhone(list[0].tel[0]);
+        targetInput.dispatchEvent(new Event('input'));
+      }
+    }).catch(function () { /* المستخدم لغى الاختيار */ });
+  }
+
+  function wirePickButtons(root) {
+    (root || document).querySelectorAll('.pick-contact').forEach(function (btn) {
+      if (!CONTACTS_OK) { btn.classList.add('hidden'); return; }
+      if (btn.dataset.wired) return;
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', function () {
+        var target = btn.dataset.target
+          ? document.getElementById(btn.dataset.target)
+          : btn.parentElement.querySelector('input');
+        if (target) pickContact(target);
+      });
+    });
+  }
+
   /* ===== أولاد رب الأسرة ===== */
-  function addSonRow(value) {
+  function addSonRow() {
     var box = document.getElementById('sonsBox');
-    var row = document.createElement('div');
-    row.className = 'son-row';
+    var card = document.createElement('div');
+    card.className = 'son-card';
     var n = box.children.length + 1;
-    row.innerHTML =
-      '<span class="num">' + n + '</span>' +
-      '<input type="text" placeholder="اسم الولد الكامل" value="">' +
-      '<button type="button" class="rm" title="حذف">✕</button>';
-    if (value) row.querySelector('input').value = value;
-    row.querySelector('.rm').addEventListener('click', function () {
-      row.remove();
+    card.innerHTML =
+      '<div class="son-head">' +
+        '<span class="num">' + n + '</span>' +
+        '<input type="text" class="son-name" placeholder="اسم الولد الكامل">' +
+        '<button type="button" class="rm" title="حذف">✕</button>' +
+      '</div>' +
+      '<div class="phone-row">' +
+        '<input type="tel" class="son-phone" inputmode="numeric" placeholder="رقم الولد إن وجد (اختياري)">' +
+        '<button type="button" class="btn-pick pick-contact">📇 من جهات الاتصال</button>' +
+      '</div>';
+    card.querySelector('.rm').addEventListener('click', function () {
+      card.remove();
       renumberSons();
     });
-    box.appendChild(row);
+    box.appendChild(card);
+    wirePickButtons(card);
   }
   function renumberSons() {
-    var rows = document.querySelectorAll('#sonsBox .son-row .num');
+    var rows = document.querySelectorAll('#sonsBox .son-card .num');
     rows.forEach(function (el, i) { el.textContent = i + 1; });
   }
   function getSons() {
     var out = [];
-    document.querySelectorAll('#sonsBox input').forEach(function (inp) {
-      var v = inp.value.trim();
-      if (v) out.push(v);
+    document.querySelectorAll('#sonsBox .son-card').forEach(function (card) {
+      var name = card.querySelector('.son-name').value.trim();
+      var phone = card.querySelector('.son-phone').value.trim();
+      if (name) out.push({ name: name, phone: phone });
     });
     return out;
   }
   document.getElementById('btnAddSon').addEventListener('click', function () { addSonRow(); });
   addSonRow(); /* صف جاهز افتراضياً */
+  wirePickButtons(document);
 
   /* ===== الموقع الجغرافي ===== */
   var curLat = '', curLng = '';
@@ -456,14 +514,24 @@
     return (r.lat && r.lng) ? 'https://www.google.com/maps?q=' + r.lat + ',' + r.lng : '';
   }
 
+  /* توحيد شكل الأولاد (يدعم التسجيلات القديمة المخزونة أسماء فقط) */
+  function normSons(r) {
+    return (r.sons || []).map(function (s) {
+      return typeof s === 'string' ? { name: s, phone: '' } : s;
+    });
+  }
+
   function recordText(r) {
+    var sons = normSons(r);
     var t = '📋 تسجيل أسرة — عشيرة السوره ميري\n' +
       '👤 رب الأسرة: ' + r.name + '\n' +
       '📞 الهاتف: ' + r.phone + '\n' +
       '🏠 العنوان: ' + r.address;
-    if (r.sons && r.sons.length) {
-      t += '\n👥 الأولاد (' + r.sons.length + '):';
-      r.sons.forEach(function (s, i) { t += '\n   ' + (i + 1) + '. ' + s; });
+    if (sons.length) {
+      t += '\n👥 الأولاد (' + sons.length + '):';
+      sons.forEach(function (s, i) {
+        t += '\n   ' + (i + 1) + '. ' + s.name + (s.phone ? ' — 📞 ' + s.phone : '');
+      });
     } else {
       t += '\n👥 الأولاد: لا يوجد';
     }
@@ -530,7 +598,7 @@
 
   function renderList() {
     var list = getRecords();
-    var totalSons = list.reduce(function (a, r) { return a + (r.sons ? r.sons.length : 0); }, 0);
+    var totalSons = list.reduce(function (a, r) { return a + normSons(r).length; }, 0);
     document.getElementById('statFam').textContent = list.length;
     document.getElementById('statSons').textContent = totalSons;
     document.getElementById('statAll').textContent = list.length + totalSons;
@@ -541,7 +609,8 @@
       .map(function (r, i) { return { r: r, i: i }; })
       .filter(function (x) {
         if (!q) return true;
-        var hay = x.r.name + ' ' + x.r.phone + ' ' + x.r.address + ' ' + (x.r.sons || []).join(' ');
+        var sonsHay = normSons(x.r).map(function (s) { return s.name + ' ' + s.phone; }).join(' ');
+        var hay = x.r.name + ' ' + x.r.phone + ' ' + x.r.address + ' ' + sonsHay;
         return hay.indexOf(q) !== -1;
       });
 
@@ -553,9 +622,12 @@
     }
 
     box.innerHTML = shown.map(function (x) {
-      var r = x.r, m = mapLink(r);
-      var sonsHtml = (r.sons && r.sons.length)
-        ? '<div class="sons">👥 الأولاد (' + r.sons.length + '): ' + r.sons.map(esc).join('، ') + '</div>'
+      var r = x.r, m = mapLink(r), sons = normSons(r);
+      var sonsHtml = sons.length
+        ? '<div class="sons">👥 الأولاد (' + sons.length + '): ' +
+          sons.map(function (s) {
+            return esc(s.name) + (s.phone ? ' <span style="opacity:.75">(📞 ' + esc(s.phone) + ')</span>' : '');
+          }).join('، ') + '</div>'
         : '';
       return '<div class="rec">' +
         '<div class="name">👤 ' + esc(r.name) + '</div>' +
@@ -592,11 +664,14 @@
   document.getElementById('btnExport').addEventListener('click', function () {
     var list = getRecords();
     if (!list.length) { flash(document.getElementById('dbMsg'), 'بعد ماكو تسجيلات للتصدير', 'err'); return; }
-    var rows = [['التاريخ والوقت', 'رب الأسرة', 'رقم الهاتف', 'العنوان', 'عدد الأولاد', 'أسماء الأولاد', 'رابط الموقع']];
+    var rows = [['التاريخ والوقت', 'رب الأسرة', 'رقم الهاتف', 'العنوان', 'عدد الأولاد', 'الأولاد وأرقامهم', 'رابط الموقع']];
     list.forEach(function (r) {
+      var sons = normSons(r);
       rows.push([
         r.time || '', r.name, r.phone, r.address,
-        (r.sons || []).length, (r.sons || []).join('، '), mapLink(r)
+        sons.length,
+        sons.map(function (s) { return s.name + (s.phone ? ' (' + s.phone + ')' : ''); }).join('، '),
+        mapLink(r)
       ]);
     });
     var csv = '﻿' + rows.map(function (row) {

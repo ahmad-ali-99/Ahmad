@@ -318,18 +318,21 @@
 
       <label for="sheetUrl">رابط جدولك (احفظه هنا حتى يصير عندك زر يفتحه مباشرة)</label>
       <input type="url" id="sheetUrl" dir="ltr" placeholder="https://docs.google.com/spreadsheets/d/...">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-        <button class="btn btn-ghost" id="btnSaveSheet">💾 حفظ الرابط</button>
-        <button class="btn btn-ghost" id="btnOpenSheet">📊 فتح الجدول</button>
-      </div>
+      <button class="btn btn-ghost" id="btnSaveSheet" style="margin-top:10px">💾 حفظ الرابط</button>
+      <a class="btn btn-ghost hidden" id="lnkOpenSheet" target="_blank" rel="noopener" style="margin-top:8px;text-decoration:none">📊 فتح الجدول</a>
       <div class="hint">تلگي الرابط لما تفتح الجدول بالمتصفح — انسخه من شريط العنوان.</div>
 
       <hr class="divider">
 
-      <div class="section-title">رقم الواتساب لاستلام النسخ</div>
-      <label for="waNumber" style="margin-top:0">رقمك على واتساب (اختياري — للي يحب يدزلك نسخة واتساب إضافية)</label>
+      <div class="section-title">رابط الاستمارة للمشاركة</div>
+      <label for="waNumber" style="margin-top:0">رقمك على واتساب (النسخ الإضافية توصل لهذا الرقم)</label>
       <input type="tel" id="waNumber" inputmode="numeric" placeholder="مثال: 9647701234567 (بدون + وبدون صفر البداية)">
-      <button class="btn btn-ghost" id="btnSaveNumber" style="margin-top:10px">💾 حفظ الرقم ونسخ رابط الاستمارة للمشاركة</button>
+      <button class="btn btn-ghost" id="btnSaveNumber" style="margin-top:10px">💾 حفظ الرقم وإنشاء رابط المشاركة</button>
+      <div id="shareBox" class="hidden">
+        <label for="shareLink">رابط الاستمارة (انسخه ودزه بگروب العشيرة):</label>
+        <input type="text" id="shareLink" readonly dir="ltr">
+        <button class="btn btn-ghost" id="btnCopyShare" style="margin-top:8px">📋 نسخ الرابط</button>
+      </div>
       <div class="hint">رابط المشاركة يعرض الاستمارة فقط — بدون لوحة المشرف.</div>
 
       <hr class="divider">
@@ -358,9 +361,31 @@
   var LS_SHEET = 'tribeSheetUrl_v1';
   var LS_LOGO = 'tribeLogo_v1';
 
+  /* تخزين آمن — بعض المتصفحات/العارضات تمنع localStorage فلا نخلي الصفحة تنكسر */
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  /* نسخ نص مع بدائل إذا انحجب أمر النسخ */
+  function copyText(text, onDone) {
+    function fallback() {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        onDone(ok);
+      } catch (e) { onDone(false); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { onDone(true); }, fallback);
+    } else { fallback(); }
+  }
+
   /* عرض الشعار المرفوع إذا كان محفوظاً على هذا الجهاز */
   function applyLogo() {
-    var data = localStorage.getItem(LS_LOGO);
+    var data = lsGet(LS_LOGO);
     var img = document.getElementById('logoImg');
     var svg = document.getElementById('logoSvg');
     if (data) {
@@ -389,7 +414,7 @@
   function getWaNumber() {
     var p = params.get('to');
     if (p && /^\d{8,15}$/.test(p)) return p;
-    return localStorage.getItem(LS_NUM) || DEFAULT_WA;
+    return lsGet(LS_NUM) || DEFAULT_WA;
   }
 
   if (!SHARE_MODE) {
@@ -426,8 +451,26 @@
   function showDb() {
     document.getElementById('pinScreen').classList.add('hidden');
     document.getElementById('dbContent').classList.remove('hidden');
-    document.getElementById('waNumber').value = localStorage.getItem(LS_NUM) || '';
-    document.getElementById('sheetUrl').value = localStorage.getItem(LS_SHEET) || '';
+    document.getElementById('waNumber').value = lsGet(LS_NUM) || '';
+    document.getElementById('sheetUrl').value = lsGet(LS_SHEET) || '';
+    refreshSheetLink();
+    refreshShareBox();
+  }
+
+  /* زر فتح الجدول: رابط حقيقي يتفعل بعد حفظ الرابط */
+  function refreshSheetLink() {
+    var url = lsGet(LS_SHEET) || '';
+    var a = document.getElementById('lnkOpenSheet');
+    if (url) { a.href = url; a.classList.remove('hidden'); }
+    else a.classList.add('hidden');
+  }
+
+  /* صندوق رابط المشاركة: يظهر الرابط بحقل جاهز للنسخ */
+  function refreshShareBox() {
+    var num = lsGet(LS_NUM) || DEFAULT_WA;
+    var share = location.origin + location.pathname + '?to=' + num;
+    document.getElementById('shareLink').value = share;
+    document.getElementById('shareBox').classList.remove('hidden');
   }
 
   document.getElementById('btnPin').addEventListener('click', tryPin);
@@ -604,6 +647,13 @@
     location.href = SCRIPT_URL + '?' + q.toString();
   });
 
+  /* إذا رجع المستخدم من صفحة التأكيد (زر رجوع)، نرجّع زر الإرسال لحالته الطبيعية */
+  window.addEventListener('pageshow', function () {
+    var btn = document.getElementById('btnSubmit');
+    btn.disabled = false;
+    btn.textContent = '📤 إرسال البيانات';
+  });
+
   /* ===== إعدادات المشرف ===== */
   document.getElementById('btnSaveSheet').addEventListener('click', function () {
     var url = document.getElementById('sheetUrl').value.trim();
@@ -612,17 +662,14 @@
       flash(msgEl, 'الصق رابط جدول Google Sheets الصحيح (يبدأ بـ docs.google.com/spreadsheets)', 'err');
       return;
     }
-    localStorage.setItem(LS_SHEET, url);
-    flash(msgEl, '✅ انحفظ رابط الجدول', 'ok');
-  });
-
-  document.getElementById('btnOpenSheet').addEventListener('click', function () {
-    var url = localStorage.getItem(LS_SHEET) || document.getElementById('sheetUrl').value.trim();
-    if (!url) {
-      flash(document.getElementById('dbMsg'), 'احفظ رابط جدولك أول مرة', 'err');
+    if (!lsSet(LS_SHEET, url)) {
+      document.getElementById('lnkOpenSheet').href = url;
+      document.getElementById('lnkOpenSheet').classList.remove('hidden');
+      flash(msgEl, 'المتصفح منع الحفظ الدائم، بس زر فتح الجدول جاهز لهذه الجلسة', 'err');
       return;
     }
-    window.open(url, '_blank');
+    refreshSheetLink();
+    flash(msgEl, '✅ انحفظ رابط الجدول — زر «فتح الجدول» صار جاهز', 'ok');
   });
 
   /* رفع شعار العشيرة (يُصغَّر تلقائياً ويُخزن على الجهاز) */
@@ -640,12 +687,11 @@
         c.width = Math.round(im.width * scale);
         c.height = Math.round(im.height * scale);
         c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
-        try {
-          localStorage.setItem(LS_LOGO, c.toDataURL('image/png'));
+        if (lsSet(LS_LOGO, c.toDataURL('image/png'))) {
           applyLogo();
           flash(msgEl, '✅ انحفظ الشعار وصار يظهر أعلى الاستمارة', 'ok');
-        } catch (e) {
-          flash(msgEl, 'الصورة كبيرة جداً — جرب صورة أصغر', 'err');
+        } else {
+          flash(msgEl, 'تعذر الحفظ — جرب صورة أصغر أو من متصفح ثاني', 'err');
         }
       };
       im.src = reader.result;
@@ -654,7 +700,7 @@
   });
 
   document.getElementById('btnResetLogo').addEventListener('click', function () {
-    localStorage.removeItem(LS_LOGO);
+    lsDel(LS_LOGO);
     applyLogo();
     flash(document.getElementById('dbMsg'), 'رجع الشعار المرسوم', 'ok');
   });
@@ -663,12 +709,23 @@
     var num = document.getElementById('waNumber').value.replace(/\D/g, '');
     var msgEl = document.getElementById('dbMsg');
     if (!/^\d{8,15}$/.test(num)) { flash(msgEl, 'اكتب الرقم بالصيغة الدولية، مثال: 9647701234567', 'err'); return; }
-    localStorage.setItem(LS_NUM, num);
-    var share = location.origin + location.pathname + '?to=' + num;
-    navigator.clipboard.writeText(share).then(function () {
-      flash(msgEl, '✅ انحفظ الرقم وانسخ رابط الاستمارة — دزّه بگروب العشيرة (يعرض الاستمارة فقط)', 'ok');
-    }, function () {
-      flash(msgEl, '✅ انحفظ الرقم. رابط المشاركة: ' + share, 'ok');
+    lsSet(LS_NUM, num);
+    refreshShareBox();
+    var share = document.getElementById('shareLink').value;
+    copyText(share, function (ok) {
+      flash(msgEl, ok
+        ? '✅ انحفظ الرقم وانسخ الرابط — والرابط ظاهر بالحقل فوق أيضاً'
+        : '✅ انحفظ الرقم — الرابط ظاهر بالحقل فوق، اضغط عليه وانسخه', 'ok');
     });
   });
+
+  /* نسخ رابط المشاركة من الحقل */
+  document.getElementById('btnCopyShare').addEventListener('click', function () {
+    var inp = document.getElementById('shareLink');
+    inp.focus(); inp.select();
+    copyText(inp.value, function (ok) {
+      flash(document.getElementById('dbMsg'), ok ? '✅ انسخ الرابط' : 'حدد النص بالحقل وانسخه يدوياً', ok ? 'ok' : 'err');
+    });
+  });
+  document.getElementById('shareLink').addEventListener('focus', function () { this.select(); });
 </script>

@@ -343,9 +343,6 @@
       </div>
       <div class="hint">ملاحظة: الشعار المرفوع ينحفظ على جهازك ويظهر عندك. حتى يظهر لكل الناس بالرابط، دز ملف الشعار للمطور يثبّته بالصفحة بشكل دائم.</div>
 
-      <hr class="divider">
-
-      <button class="btn btn-ghost" id="btnChangePin">🔑 تغيير رمز الدخول</button>
       <div class="msg" id="dbMsg"></div>
     </div>
   </section>
@@ -358,7 +355,6 @@
   var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzifmGnbUQtaPkBhWQnmSLKK-osiKCwBlUFfNgHu8AS8sUutG9GA7unqGRZBvtc57lq/exec';
 
   var LS_NUM = 'tribeWaNumber_v1';
-  var LS_PIN = 'tribeAdminPin_v1';
   var LS_SHEET = 'tribeSheetUrl_v1';
   var LS_LOGO = 'tribeLogo_v1';
 
@@ -410,7 +406,9 @@
     if (!isForm) initPinScreen();
   }
 
-  /* ===== رمز دخول المشرف ===== */
+  /* ===== رمز دخول المشرف (ثابت ومخزون كبصمة مشفرة، غير مكتوب صراحة) ===== */
+  var ADMIN_HASH = 'h37j00o';
+
   function hashPin(pin) {
     var h = 5381;
     for (var i = 0; i < pin.length; i++) h = ((h << 5) + h + pin.charCodeAt(i)) >>> 0;
@@ -419,12 +417,6 @@
 
   function initPinScreen() {
     if (unlocked) { showDb(); return; }
-    var saved = localStorage.getItem(LS_PIN);
-    document.getElementById('pinTitle').textContent = saved ? 'دخول المشرف' : 'أول مرة؟ عيّن رمز الدخول';
-    document.getElementById('pinDesc').textContent = saved
-      ? 'أدخل رمز الدخول'
-      : 'اختر رمز سري (4 أرقام أو أكثر) لقفل لوحة المشرف على هذا الجهاز';
-    document.getElementById('btnPin').textContent = saved ? 'دخول' : 'حفظ الرمز والدخول';
     document.getElementById('pinScreen').classList.remove('hidden');
     document.getElementById('dbContent').classList.add('hidden');
     document.getElementById('pinInput').value = '';
@@ -446,30 +438,13 @@
   function tryPin() {
     var val = document.getElementById('pinInput').value.trim();
     var msgEl = document.getElementById('pinMsg');
-    var saved = localStorage.getItem(LS_PIN);
-    if (val.length < 4) { flash(msgEl, 'الرمز لازم يكون 4 أرقام على الأقل', 'err'); return; }
-    if (!saved) {
-      localStorage.setItem(LS_PIN, hashPin(val));
-      unlocked = true;
-      flash(msgEl, '✅ انحفظ الرمز — لا تنساه!', 'ok');
-      setTimeout(showDb, 600);
-    } else if (hashPin(val) === saved) {
+    if (hashPin(val) === ADMIN_HASH) {
       unlocked = true;
       showDb();
     } else {
       flash(msgEl, '❌ الرمز غلط', 'err');
     }
   }
-
-  document.getElementById('btnChangePin').addEventListener('click', function () {
-    var cur = prompt('أدخل الرمز الحالي:');
-    if (cur === null) return;
-    if (hashPin(cur.trim()) !== localStorage.getItem(LS_PIN)) { alert('الرمز الحالي غلط'); return; }
-    var nw = prompt('أدخل الرمز الجديد (4 أرقام أو أكثر):');
-    if (nw === null || nw.trim().length < 4) { alert('رمز غير صالح'); return; }
-    localStorage.setItem(LS_PIN, hashPin(nw.trim()));
-    alert('✅ تم تغيير الرمز');
-  });
 
   /* ===== اختيار الرقم من جهات اتصال الهاتف ===== */
   var CONTACTS_OK = ('contacts' in navigator) && ('select' in navigator.contacts);

@@ -166,46 +166,15 @@
     font-variant-numeric: tabular-nums; max-width: 220px; margin: 0 auto; direction: ltr;
   }
 
-  .toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
-  .toolbar .full { grid-column: 1 / -1; }
-
-  .stat-row { display: flex; gap: 8px; margin-bottom: 12px; }
-  .stat {
-    flex: 1; background: var(--field); border: 1px solid var(--line);
-    border-radius: 12px; padding: 10px; text-align: center;
+  .db-note {
+    background: var(--accent-soft); border: 1px solid var(--accent);
+    border-radius: 12px; padding: 14px; font-size: 14px; line-height: 1.7;
+    color: var(--ink);
   }
-  .stat b { display: block; font-size: 21px; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .stat span { font-size: 12px; color: var(--ink-soft); }
-
-  .rec-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
-  .rec {
-    border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px;
-    background: var(--field);
-    display: flex; flex-direction: column; gap: 4px;
-  }
-  .rec .name { font-weight: 800; font-size: 15.5px; }
-  .rec .meta { font-size: 13.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-  .rec .meta a { color: var(--accent); font-weight: 700; text-decoration: none; }
-  .rec .meta a:hover { text-decoration: underline; }
-  .rec .sons { font-size: 13.5px; color: var(--ink); background: var(--accent-soft); border-radius: 8px; padding: 7px 10px; margin-top: 4px; }
-  .rec-actions { display: flex; gap: 8px; margin-top: 8px; }
-  .chip {
-    border: none; border-radius: 8px; cursor: pointer; font: inherit;
-    font-size: 13px; font-weight: 700; padding: 7px 12px;
-  }
-  .chip-wa { background: var(--wa); color: #fff; }
-  .chip-del { background: var(--err-bg); color: var(--err-ink); }
-  .chip:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-
-  .empty { text-align: center; color: var(--ink-soft); font-size: 14px; padding: 26px 10px; }
-  .empty strong { display: block; font-size: 16px; color: var(--ink); margin-bottom: 4px; }
+  .db-note b { color: var(--accent-deep); }
 
   .divider { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
   .footer-note { text-align: center; font-size: 12px; color: var(--ink-soft); }
-  .admin-link {
-    background: none; border: none; color: var(--ink-soft); font: inherit;
-    font-size: 12px; cursor: pointer; text-decoration: underline;
-  }
   .hidden { display: none !important; }
 </style>
 
@@ -218,8 +187,8 @@
   </header>
 
   <nav class="tabs hidden" id="tabsNav" role="tablist">
-    <button class="tab" id="tabForm" role="tab" aria-selected="true" onclick="switchTab('form')">📝 تسجيل جديد</button>
-    <button class="tab" id="tabDb" role="tab" aria-selected="false" onclick="switchTab('db')">🔐 قاعدة البيانات</button>
+    <button class="tab" id="tabForm" role="tab" aria-selected="true" onclick="switchTab('form')">📝 التسجيل</button>
+    <button class="tab" id="tabDb" role="tab" aria-selected="false" onclick="switchTab('db')">🔐 لوحة المشرف</button>
   </nav>
 
   <!-- ========== الاستمارة ========== -->
@@ -249,80 +218,77 @@
         <span class="loc-status" id="locStatus">لم يتم تحديد الموقع</span>
       </div>
 
-      <button type="button" class="btn btn-wa" id="btnSendWa" style="margin-top:20px">📤 إرسال البيانات على واتساب</button>
-      <button type="submit" class="btn btn-primary hidden" id="btnSaveLocal" style="margin-top:10px">💾 حفظ في قاعدة البيانات (للمشرف)</button>
+      <button type="submit" class="btn btn-primary" id="btnSubmit">📤 إرسال البيانات</button>
+      <div class="hint" style="text-align:center;margin-top:8px">بعد الإرسال تظهر لك صفحة تأكيد الحفظ ✅ وفيها خيار إرسال نسخة على واتساب</div>
       <div class="msg" id="formMsg"></div>
     </form>
   </section>
 
-  <!-- ========== قاعدة البيانات (للمشرف فقط) ========== -->
+  <!-- ========== لوحة المشرف ========== -->
   <section class="card hidden" id="paneDb">
 
     <!-- شاشة رمز الدخول -->
     <div class="pin-screen" id="pinScreen">
       <div class="lock">🔐</div>
       <h2 id="pinTitle">دخول المشرف</h2>
-      <p id="pinDesc">أدخل رمز الدخول لعرض قاعدة البيانات</p>
+      <p id="pinDesc">أدخل رمز الدخول</p>
       <input type="password" class="pin-input" id="pinInput" inputmode="numeric" maxlength="8" placeholder="••••">
       <button class="btn btn-primary" id="btnPin" style="max-width:220px;margin:14px auto 0">دخول</button>
       <div class="msg" id="pinMsg"></div>
     </div>
 
-    <!-- محتوى قاعدة البيانات -->
+    <!-- محتوى لوحة المشرف -->
     <div class="hidden" id="dbContent">
-      <div class="stat-row">
-        <div class="stat"><b id="statFam">0</b><span>أسرة مسجلة</span></div>
-        <div class="stat"><b id="statSons">0</b><span>عدد الأولاد</span></div>
-        <div class="stat"><b id="statAll">0</b><span>مجموع الذكور</span></div>
+
+      <div class="db-note">
+        📊 <b>قاعدة البيانات الرسمية اونلاين بجدول Google Sheets مالك.</b><br>
+        كل استمارة تنعبى تنضاف سطر جديد بالجدول تلقائياً. تكدر تفتحه من تطبيق
+        «جداول بيانات Google» على تلفونك، وتنزّله Excel من: ملف ← تنزيل، وتستورد بيانات
+        قديمة من: ملف ← استيراد.
       </div>
 
-      <input type="search" id="searchBox" placeholder="🔍 دوّر بالاسم أو الهاتف أو العنوان...">
-
-      <div class="toolbar">
-        <button class="btn btn-ghost" id="btnExport">📊 تنزيل Excel</button>
-        <button class="btn btn-ghost" id="btnCopyAll">📋 نسخ الكل</button>
-        <button class="btn btn-wa full" id="btnWaAll" style="margin-top:0">📤 إرسال كل السجل على واتساب</button>
+      <label for="sheetUrl">رابط جدولك (احفظه هنا حتى يصير عندك زر يفتحه مباشرة)</label>
+      <input type="url" id="sheetUrl" dir="ltr" placeholder="https://docs.google.com/spreadsheets/d/...">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <button class="btn btn-ghost" id="btnSaveSheet">💾 حفظ الرابط</button>
+        <button class="btn btn-ghost" id="btnOpenSheet">📊 فتح الجدول</button>
       </div>
-
-      <div class="rec-list" id="recList"></div>
-      <div class="msg" id="dbMsg"></div>
+      <div class="hint">تلگي الرابط لما تفتح الجدول بالمتصفح — انسخه من شريط العنوان.</div>
 
       <hr class="divider">
 
-      <div class="section-title">إعدادات المشرف</div>
-      <label for="waNumber" style="margin-top:0">رقمك على واتساب حتى توصلك التسجيلات مباشرة</label>
+      <div class="section-title">رقم الواتساب لاستلام النسخ</div>
+      <label for="waNumber" style="margin-top:0">رقمك على واتساب (اختياري — للي يحب يدزلك نسخة واتساب إضافية)</label>
       <input type="tel" id="waNumber" inputmode="numeric" placeholder="مثال: 9647701234567 (بدون + وبدون صفر البداية)">
-      <div class="hint">بعد حفظ الرقم ينسخ لك رابط استمارة خاص — الناس يشوفون الاستمارة فقط، وكل تسجيل يوصلك رسالة على واتسابك مباشرة.</div>
       <button class="btn btn-ghost" id="btnSaveNumber" style="margin-top:10px">💾 حفظ الرقم ونسخ رابط الاستمارة للمشاركة</button>
-      <button class="btn btn-ghost" id="btnChangePin" style="margin-top:8px">🔑 تغيير رمز الدخول</button>
+      <div class="hint">رابط المشاركة يعرض الاستمارة فقط — بدون لوحة المشرف.</div>
+
+      <hr class="divider">
+
+      <button class="btn btn-ghost" id="btnChangePin">🔑 تغيير رمز الدخول</button>
+      <div class="msg" id="dbMsg"></div>
     </div>
   </section>
 
-  <div class="footer-note" id="footerNote">
-    <span id="footerText">جميع البيانات تُرسل مباشرة إلى مشرف قاعدة بيانات العشيرة.</span>
-    <button class="admin-link hidden" id="adminReveal">دخول المشرف</button>
-  </div>
+  <div class="footer-note" id="footerText">جميع البيانات تُحفظ مباشرة في قاعدة بيانات العشيرة.</div>
 </div>
 
 <script>
-  var LS_KEY = 'tribeRecords_v1';
+  /* قاعدة البيانات: تطبيق Google Apps Script المرتبط بجدول Google Sheets مال المشرف */
+  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzifmGnbUQtaPkBhWQnmSLKK-osiKCwBlUFfNgHu8AS8sUutG9GA7unqGRZBvtc57lq/exec';
+
   var LS_NUM = 'tribeWaNumber_v1';
   var LS_PIN = 'tribeAdminPin_v1';
+  var LS_SHEET = 'tribeSheetUrl_v1';
 
   /*
-   * وضعان للصفحة:
-   *  - وضع المشاركة (?to=رقم): استمارة فقط — قاعدة البيانات والتبويبات مخفية تماماً عن المسجّلين.
-   *  - وضع المشرف (الرابط الأصلي بدون ?to): تبويبان، وقاعدة البيانات محمية برمز دخول PIN.
+   * وضعان:
+   *  - وضع المشاركة (?to=رقم): استمارة فقط — لوحة المشرف مخفية تماماً.
+   *  - وضع المشرف (الرابط الأصلي): تبويبان، واللوحة محمية برمز PIN.
    */
   var params = new URLSearchParams(location.search);
   var SHARE_MODE = /^\d{8,15}$/.test(params.get('to') || '');
   var unlocked = false;
-
-  function getRecords() {
-    try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
-    catch (e) { return []; }
-  }
-  function setRecords(list) { localStorage.setItem(LS_KEY, JSON.stringify(list)); }
 
   function getWaNumber() {
     var p = params.get('to');
@@ -330,10 +296,8 @@
     return localStorage.getItem(LS_NUM) || '';
   }
 
-  /* تهيئة الوضع */
   if (!SHARE_MODE) {
     document.getElementById('tabsNav').classList.remove('hidden');
-    document.getElementById('btnSaveLocal').classList.remove('hidden');
     document.getElementById('footerText').textContent = 'وضع المشرف — الرابط الذي تشاركه مع الناس يعرض الاستمارة فقط.';
   }
 
@@ -348,7 +312,6 @@
 
   /* ===== رمز دخول المشرف ===== */
   function hashPin(pin) {
-    /* تمويه بسيط حتى لا يُخزن الرمز نصاً صريحاً */
     var h = 5381;
     for (var i = 0; i < pin.length; i++) h = ((h << 5) + h + pin.charCodeAt(i)) >>> 0;
     return 'h' + h.toString(36);
@@ -359,8 +322,8 @@
     var saved = localStorage.getItem(LS_PIN);
     document.getElementById('pinTitle').textContent = saved ? 'دخول المشرف' : 'أول مرة؟ عيّن رمز الدخول';
     document.getElementById('pinDesc').textContent = saved
-      ? 'أدخل رمز الدخول لعرض قاعدة البيانات'
-      : 'اختر رمز سري (4 أرقام أو أكثر) يصير مفتاح قاعدة البيانات على هذا الجهاز';
+      ? 'أدخل رمز الدخول'
+      : 'اختر رمز سري (4 أرقام أو أكثر) لقفل لوحة المشرف على هذا الجهاز';
     document.getElementById('btnPin').textContent = saved ? 'دخول' : 'حفظ الرمز والدخول';
     document.getElementById('pinScreen').classList.remove('hidden');
     document.getElementById('dbContent').classList.add('hidden');
@@ -372,7 +335,7 @@
     document.getElementById('pinScreen').classList.add('hidden');
     document.getElementById('dbContent').classList.remove('hidden');
     document.getElementById('waNumber').value = localStorage.getItem(LS_NUM) || '';
-    renderList();
+    document.getElementById('sheetUrl').value = localStorage.getItem(LS_SHEET) || '';
   }
 
   document.getElementById('btnPin').addEventListener('click', tryPin);
@@ -408,11 +371,10 @@
     alert('✅ تم تغيير الرمز');
   });
 
-  /* ===== اختيار الرقم من جهات اتصال الهاتف (Contact Picker API) ===== */
+  /* ===== اختيار الرقم من جهات اتصال الهاتف ===== */
   var CONTACTS_OK = ('contacts' in navigator) && ('select' in navigator.contacts);
 
   function cleanPhone(raw) {
-    /* بس الرقم: نشيل الرموز والفراغات، ونحول 964+ إلى صيغة محلية تبدأ بـ 0 */
     var d = String(raw).replace(/\D/g, '');
     if (d.indexOf('00964') === 0) d = '0' + d.slice(5);
     else if (d.indexOf('964') === 0) d = '0' + d.slice(3);
@@ -480,7 +442,7 @@
     return out;
   }
   document.getElementById('btnAddSon').addEventListener('click', function () { addSonRow(); });
-  addSonRow(); /* صف جاهز افتراضياً */
+  addSonRow();
   wirePickButtons(document);
 
   /* ===== الموقع الجغرافي ===== */
@@ -498,15 +460,14 @@
     }, { enableHighAccuracy: true, timeout: 15000 });
   });
 
-  /* ===== قراءة الاستمارة ===== */
+  /* ===== قراءة الاستمارة والإرسال ===== */
   function readForm() {
     return {
       name: document.getElementById('fullName').value.trim(),
       phone: document.getElementById('phone').value.trim(),
       address: document.getElementById('address').value.trim(),
       sons: getSons(),
-      lat: curLat, lng: curLng,
-      time: new Date().toLocaleString('ar-IQ')
+      lat: curLat, lng: curLng
     };
   }
 
@@ -514,22 +475,20 @@
     return (r.lat && r.lng) ? 'https://www.google.com/maps?q=' + r.lat + ',' + r.lng : '';
   }
 
-  /* توحيد شكل الأولاد (يدعم التسجيلات القديمة المخزونة أسماء فقط) */
-  function normSons(r) {
-    return (r.sons || []).map(function (s) {
-      return typeof s === 'string' ? { name: s, phone: '' } : s;
-    });
+  function sonsAsText(sons) {
+    return sons.map(function (s, i) {
+      return (i + 1) + '. ' + s.name + (s.phone ? ' (' + s.phone + ')' : '');
+    }).join(' — ');
   }
 
   function recordText(r) {
-    var sons = normSons(r);
     var t = '📋 تسجيل أسرة — عشيرة السوره ميري\n' +
       '👤 رب الأسرة: ' + r.name + '\n' +
       '📞 الهاتف: ' + r.phone + '\n' +
       '🏠 العنوان: ' + r.address;
-    if (sons.length) {
-      t += '\n👥 الأولاد (' + sons.length + '):';
-      sons.forEach(function (s, i) {
+    if (r.sons.length) {
+      t += '\n👥 الأولاد (' + r.sons.length + '):';
+      r.sons.forEach(function (s, i) {
         t += '\n   ' + (i + 1) + '. ' + s.name + (s.phone ? ' — 📞 ' + s.phone : '');
       });
     } else {
@@ -540,173 +499,57 @@
     return t;
   }
 
-  function openWa(text) {
-    var num = getWaNumber();
-    var url = num
-      ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(text)
-      : 'https://api.whatsapp.com/send?text=' + encodeURIComponent(text);
-    var w = window.open(url, '_blank');
-    if (!w) location.href = url;
-  }
-
-  function resetForm() {
-    document.getElementById('regForm').reset();
-    document.getElementById('sonsBox').innerHTML = '';
-    addSonRow();
-    curLat = ''; curLng = '';
-    var s = document.getElementById('locStatus');
-    s.textContent = 'لم يتم تحديد الموقع'; s.classList.remove('ok');
-  }
-
   function flash(el, text, cls) {
     el.textContent = text; el.className = 'msg ' + cls;
-    setTimeout(function () { el.className = 'msg'; }, 4500);
+    setTimeout(function () { el.className = 'msg'; }, 5000);
   }
 
-  /* إرسال على واتساب — الزر الأساسي للمسجّلين */
-  document.getElementById('btnSendWa').addEventListener('click', function () {
-    var form = document.getElementById('regForm');
-    if (!form.reportValidity()) return;
-    var r = readForm();
-    if (!SHARE_MODE) {
-      /* بجهاز المشرف: انحفظ نسخة بالقاعدة أيضاً */
-      var list = getRecords(); list.push(r); setRecords(list);
-    }
-    openWa(recordText(r));
-    flash(document.getElementById('formMsg'), '✅ انفتح واتساب — اضغط زر الإرسال داخل واتساب حتى توصل بياناتك', 'ok');
-    resetForm();
-  });
-
-  /* حفظ محلي — يظهر فقط بوضع المشرف */
+  /*
+   * الإرسال: نوجّه المتصفح لرابط قاعدة البيانات مباشرة مع البيانات —
+   * جوجل يحفظ السطر ويعرض للمسجّل صفحة تأكيد ✅ فيها خيار نسخة واتساب.
+   * (التوجيه المباشر يشتغل من أي استضافة، بعكس الإرسال الخفي بالخلفية)
+   */
   document.getElementById('regForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var r = readForm();
-    var list = getRecords();
-    list.push(r);
-    setRecords(list);
-    flash(document.getElementById('formMsg'), '✅ انحفظت الأسرة بقاعدة البيانات (' + list.length + ' أسرة)', 'ok');
-    resetForm();
-    if (unlocked) renderList();
+    var btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = 'جاري الإرسال...';
+
+    var q = new URLSearchParams();
+    q.set('fullName', r.name);
+    q.set('phone', r.phone);
+    q.set('address', r.address);
+    q.set('sons', sonsAsText(r.sons));
+    q.set('sonsCount', r.sons.length);
+    if (r.lat) { q.set('lat', r.lat); q.set('lng', r.lng); }
+    var waNum = getWaNumber();
+    if (waNum) q.set('to', waNum);
+
+    location.href = SCRIPT_URL + '?' + q.toString();
   });
 
-  /* ===== عرض قاعدة البيانات ===== */
-  function esc(s) {
-    return String(s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
-
-  function renderList() {
-    var list = getRecords();
-    var totalSons = list.reduce(function (a, r) { return a + normSons(r).length; }, 0);
-    document.getElementById('statFam').textContent = list.length;
-    document.getElementById('statSons').textContent = totalSons;
-    document.getElementById('statAll').textContent = list.length + totalSons;
-
-    var q = document.getElementById('searchBox').value.trim();
-    var box = document.getElementById('recList');
-    var shown = list
-      .map(function (r, i) { return { r: r, i: i }; })
-      .filter(function (x) {
-        if (!q) return true;
-        var sonsHay = normSons(x.r).map(function (s) { return s.name + ' ' + s.phone; }).join(' ');
-        var hay = x.r.name + ' ' + x.r.phone + ' ' + x.r.address + ' ' + sonsHay;
-        return hay.indexOf(q) !== -1;
-      });
-
-    if (!shown.length) {
-      box.innerHTML = '<div class="empty"><strong>' +
-        (list.length ? 'ماكو نتائج للبحث' : 'بعد ماكو تسجيلات') +
-        '</strong>' + (list.length ? 'جرّب كلمة ثانية' : 'التسجيلات التي تجيك على واتساب تكدر تضيفها هنا من تبويب «تسجيل جديد»') + '</div>';
+  /* ===== إعدادات المشرف ===== */
+  document.getElementById('btnSaveSheet').addEventListener('click', function () {
+    var url = document.getElementById('sheetUrl').value.trim();
+    var msgEl = document.getElementById('dbMsg');
+    if (url.indexOf('https://docs.google.com/spreadsheets/') !== 0) {
+      flash(msgEl, 'الصق رابط جدول Google Sheets الصحيح (يبدأ بـ docs.google.com/spreadsheets)', 'err');
       return;
     }
-
-    box.innerHTML = shown.map(function (x) {
-      var r = x.r, m = mapLink(r), sons = normSons(r);
-      var sonsHtml = sons.length
-        ? '<div class="sons">👥 الأولاد (' + sons.length + '): ' +
-          sons.map(function (s) {
-            return esc(s.name) + (s.phone ? ' <span style="opacity:.75">(📞 ' + esc(s.phone) + ')</span>' : '');
-          }).join('، ') + '</div>'
-        : '';
-      return '<div class="rec">' +
-        '<div class="name">👤 ' + esc(r.name) + '</div>' +
-        '<div class="meta">📞 ' + esc(r.phone) + '</div>' +
-        '<div class="meta">🏠 ' + esc(r.address) + '</div>' +
-        sonsHtml +
-        (m ? '<div class="meta">📍 <a href="' + m + '" target="_blank" rel="noopener">افتح الموقع على الخريطة</a></div>' : '') +
-        '<div class="meta">🕓 ' + esc(r.time || '') + '</div>' +
-        '<div class="rec-actions">' +
-          '<button class="chip chip-wa" onclick="waOne(' + x.i + ')">📤 واتساب</button>' +
-          '<button class="chip chip-del" onclick="delOne(' + x.i + ')">🗑 حذف</button>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-  }
-
-  function waOne(i) {
-    var r = getRecords()[i];
-    if (r) openWa(recordText(r));
-  }
-  function delOne(i) {
-    var r = getRecords()[i];
-    if (!r) return;
-    if (!confirm('حذف أسرة «' + r.name + '»؟')) return;
-    var list = getRecords();
-    list.splice(i, 1);
-    setRecords(list);
-    renderList();
-  }
-
-  document.getElementById('searchBox').addEventListener('input', renderList);
-
-  /* تصدير Excel */
-  document.getElementById('btnExport').addEventListener('click', function () {
-    var list = getRecords();
-    if (!list.length) { flash(document.getElementById('dbMsg'), 'بعد ماكو تسجيلات للتصدير', 'err'); return; }
-    var rows = [['التاريخ والوقت', 'رب الأسرة', 'رقم الهاتف', 'العنوان', 'عدد الأولاد', 'الأولاد وأرقامهم', 'رابط الموقع']];
-    list.forEach(function (r) {
-      var sons = normSons(r);
-      rows.push([
-        r.time || '', r.name, r.phone, r.address,
-        sons.length,
-        sons.map(function (s) { return s.name + (s.phone ? ' (' + s.phone + ')' : ''); }).join('، '),
-        mapLink(r)
-      ]);
-    });
-    var csv = '﻿' + rows.map(function (row) {
-      return row.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
-    }).join('\r\n');
-    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'قاعدة-بيانات-عشيرة-السوره-ميري.csv';
-    a.click();
-    URL.revokeObjectURL(a.href);
+    localStorage.setItem(LS_SHEET, url);
+    flash(msgEl, '✅ انحفظ رابط الجدول', 'ok');
   });
 
-  /* نسخ الكل */
-  document.getElementById('btnCopyAll').addEventListener('click', function () {
-    var list = getRecords();
-    if (!list.length) { flash(document.getElementById('dbMsg'), 'بعد ماكو تسجيلات', 'err'); return; }
-    var text = list.map(recordText).join('\n———————————\n');
-    navigator.clipboard.writeText(text).then(function () {
-      flash(document.getElementById('dbMsg'), '✅ انسخ السجل كامل (' + list.length + ' أسرة)', 'ok');
-    }, function () {
-      flash(document.getElementById('dbMsg'), 'تعذر النسخ التلقائي', 'err');
-    });
+  document.getElementById('btnOpenSheet').addEventListener('click', function () {
+    var url = localStorage.getItem(LS_SHEET) || document.getElementById('sheetUrl').value.trim();
+    if (!url) {
+      flash(document.getElementById('dbMsg'), 'احفظ رابط جدولك أول مرة', 'err');
+      return;
+    }
+    window.open(url, '_blank');
   });
 
-  /* إرسال الكل على واتساب */
-  document.getElementById('btnWaAll').addEventListener('click', function () {
-    var list = getRecords();
-    if (!list.length) { flash(document.getElementById('dbMsg'), 'بعد ماكو تسجيلات للإرسال', 'err'); return; }
-    var text = '📇 سجل عشيرة السوره ميري (' + list.length + ' أسرة)\n\n' +
-      list.map(recordText).join('\n———————————\n');
-    openWa(text);
-  });
-
-  /* حفظ رقم المستلم + نسخ رابط المشاركة */
   document.getElementById('btnSaveNumber').addEventListener('click', function () {
     var num = document.getElementById('waNumber').value.replace(/\D/g, '');
     var msgEl = document.getElementById('dbMsg');

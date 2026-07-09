@@ -71,6 +71,14 @@
   .masthead .eyebrow { font-size: 12px; letter-spacing: .12em; opacity: .8; margin-bottom: 6px; }
   .masthead h1 { font-size: 23px; line-height: 1.35; text-wrap: balance; }
   .masthead .sub { font-size: 13px; opacity: .85; margin-top: 6px; }
+  .masthead .credit {
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,.25);
+    font-size: 13.5px; font-weight: 700;
+  }
+  .masthead .credit a {
+    color: #ffd98a; text-decoration: none; font-weight: 800;
+  }
 
   .tabs {
     display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
@@ -186,7 +194,8 @@
 <div class="wrap">
 
   <header class="masthead">
-    <svg class="emblem" viewBox="0 0 200 214" role="img" aria-label="شعار عشيرة السوره ميري">
+    <img id="logoImg" class="emblem hidden" alt="شعار عشيرة السوره ميري">
+    <svg id="logoSvg" class="emblem" viewBox="0 0 200 214" role="img" aria-label="شعار عشيرة السوره ميري">
       <!-- خلفية الشعار -->
       <circle cx="100" cy="102" r="99" fill="#ffffff"/>
       <defs>
@@ -243,6 +252,7 @@
     <div class="eyebrow">السجل الرسمي</div>
     <h1>قاعدة بيانات عشيرة السوره ميري</h1>
     <div class="sub">استمارة تسجيل الأسر (ذكور فقط) — رب الأسرة وأولاده، الهاتف، العنوان، والموقع</div>
+    <div class="credit">إعداد وتطوير: أحمد علي — للتواصل: <a href="https://wa.me/9647728736250" target="_blank" rel="noopener" dir="ltr">07728736250</a></div>
   </header>
 
   <nav class="tabs hidden" id="tabsNav" role="tablist">
@@ -324,15 +334,23 @@
 
       <hr class="divider">
 
+      <div class="section-title">شعار العشيرة</div>
+      <label for="logoFile" style="margin-top:0">ارفع صورة الشعار (تظهر أعلى الاستمارة بدل الشعار المرسوم)</label>
+      <input type="file" id="logoFile" accept="image/*">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <button class="btn btn-ghost" id="btnSaveLogo">💾 حفظ الشعار</button>
+        <button class="btn btn-ghost" id="btnResetLogo">↩ رجوع للشعار المرسوم</button>
+      </div>
+      <div class="hint">ملاحظة: الشعار المرفوع ينحفظ على جهازك ويظهر عندك. حتى يظهر لكل الناس بالرابط، دز ملف الشعار للمطور يثبّته بالصفحة بشكل دائم.</div>
+
+      <hr class="divider">
+
       <button class="btn btn-ghost" id="btnChangePin">🔑 تغيير رمز الدخول</button>
       <div class="msg" id="dbMsg"></div>
     </div>
   </section>
 
   <div class="footer-note" id="footerText">جميع البيانات تُحفظ مباشرة في قاعدة بيانات العشيرة.</div>
-  <div class="footer-note">
-    تطوير: <b>أحمد علي</b> — للتواصل: <a href="https://wa.me/9647728736250" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:none" dir="ltr">07728736250</a>
-  </div>
 </div>
 
 <script>
@@ -342,6 +360,23 @@
   var LS_NUM = 'tribeWaNumber_v1';
   var LS_PIN = 'tribeAdminPin_v1';
   var LS_SHEET = 'tribeSheetUrl_v1';
+  var LS_LOGO = 'tribeLogo_v1';
+
+  /* عرض الشعار المرفوع إذا كان محفوظاً على هذا الجهاز */
+  function applyLogo() {
+    var data = localStorage.getItem(LS_LOGO);
+    var img = document.getElementById('logoImg');
+    var svg = document.getElementById('logoSvg');
+    if (data) {
+      img.src = data;
+      img.classList.remove('hidden');
+      svg.classList.add('hidden');
+    } else {
+      img.classList.add('hidden');
+      svg.classList.remove('hidden');
+    }
+  }
+  applyLogo();
 
   /*
    * وضعان:
@@ -613,6 +648,40 @@
       return;
     }
     window.open(url, '_blank');
+  });
+
+  /* رفع شعار العشيرة (يُصغَّر تلقائياً ويُخزن على الجهاز) */
+  document.getElementById('btnSaveLogo').addEventListener('click', function () {
+    var f = document.getElementById('logoFile').files[0];
+    var msgEl = document.getElementById('dbMsg');
+    if (!f) { flash(msgEl, 'اختر صورة الشعار أولاً', 'err'); return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        var max = 512;
+        var scale = Math.min(1, max / Math.max(im.width, im.height));
+        var c = document.createElement('canvas');
+        c.width = Math.round(im.width * scale);
+        c.height = Math.round(im.height * scale);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        try {
+          localStorage.setItem(LS_LOGO, c.toDataURL('image/png'));
+          applyLogo();
+          flash(msgEl, '✅ انحفظ الشعار وصار يظهر أعلى الاستمارة', 'ok');
+        } catch (e) {
+          flash(msgEl, 'الصورة كبيرة جداً — جرب صورة أصغر', 'err');
+        }
+      };
+      im.src = reader.result;
+    };
+    reader.readAsDataURL(f);
+  });
+
+  document.getElementById('btnResetLogo').addEventListener('click', function () {
+    localStorage.removeItem(LS_LOGO);
+    applyLogo();
+    flash(document.getElementById('dbMsg'), 'رجع الشعار المرسوم', 'ok');
   });
 
   document.getElementById('btnSaveNumber').addEventListener('click', function () {

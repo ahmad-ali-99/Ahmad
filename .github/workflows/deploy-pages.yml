@@ -1,8 +1,8 @@
 name: نشر الموقع على GitHub Pages
 
+# ملاحظة: شغّل هذا الـ workflow يدوياً من تبويب Actions بعد تحويل المستودع إلى Public
+# (GitHub Pages لا يشتغل على المستودعات الخاصة بالحساب المجاني)
 on:
-  push:
-    branches: ["claude/tribe-database-contacts-0devu5", "main"]
   workflow_dispatch:
 
 permissions:

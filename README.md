@@ -32,7 +32,7 @@
 
 1. سوي الخطوات 1-3 من الطريقة الأولى لكن بملف `google-apps-script.gs` بدلاً منه، وانسخ رابط الـ `/exec`.
 2. عدّل ملف `index.html`: بدّل `PASTE_YOUR_GOOGLE_SCRIPT_URL_HERE` برابطك.
-3. حوّل المستودع إلى Public، وبعدها شغّل الـ workflow المسمى "نشر الموقع على GitHub Pages" من تبويب **Actions** (أو ادفع أي تعديل جديد) — ينشر الموقع تلقائياً ويصير رابطك:
+3. حوّل المستودع إلى Public، وبعدها روح لتبويب **Actions ← نشر الموقع على GitHub Pages ← Run workflow** — ينشر الموقع تلقائياً ويصير رابطك:
    `https://ahmad-ali-99.github.io/Ahmad/`
 
 ---

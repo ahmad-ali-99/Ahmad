@@ -356,7 +356,7 @@
         <button class="btn btn-ghost" id="btnSaveLogo">💾 حفظ الشعار</button>
         <button class="btn btn-ghost" id="btnResetLogo">↩ رجوع للشعار المرسوم</button>
       </div>
-      <div class="hint">ملاحظة: الشعار المرفوع ينحفظ على جهازك ويظهر عندك. حتى يظهر لكل الناس بالرابط، دز ملف الشعار للمطور يثبّته بالصفحة بشكل دائم.</div>
+      <div class="hint">الرفع من هنا يظهر على جهازك فقط. حتى يثبت الشعار للجميع وللأبد: ارفع صورة الشعار على مستودع GitHub وسمّها tribe-logo.png — الصفحة تعرضها تلقائياً لكل الناس.</div>
 
       <div class="msg" id="dbMsg"></div>
     </div>
@@ -395,19 +395,28 @@
     } else { fallback(); }
   }
 
-  /* عرض الشعار المرفوع إذا كان محفوظاً على هذا الجهاز */
+  /*
+   * الشعار — بالأولوية:
+   *  1. شعار مرفوع يدوياً على هذا الجهاز (من لوحة المشرف)
+   *  2. الشعار الرسمي الثابت بالموقع (ملف tribe-logo.png) — يظهر للجميع دائماً
+   *  3. الشعار المرسوم (SVG) كاحتياط
+   */
   function applyLogo() {
-    var data = lsGet(LS_LOGO);
     var img = document.getElementById('logoImg');
     var svg = document.getElementById('logoSvg');
+    function showImg() { img.classList.remove('hidden'); svg.classList.add('hidden'); }
+    function showSvg() { img.classList.add('hidden'); svg.classList.remove('hidden'); }
+
+    var data = lsGet(LS_LOGO);
     if (data) {
+      img.onerror = showSvg;
       img.src = data;
-      img.classList.remove('hidden');
-      svg.classList.add('hidden');
-    } else {
-      img.classList.add('hidden');
-      svg.classList.remove('hidden');
+      showImg();
+      return;
     }
+    img.onerror = showSvg;
+    img.onload = showImg;
+    img.src = 'tribe-logo.png?v=1';
   }
   applyLogo();
 

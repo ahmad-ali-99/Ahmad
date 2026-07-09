@@ -63,6 +63,11 @@
     position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 5px;
     background: var(--gold);
   }
+  .masthead { text-align: center; }
+  .masthead .emblem {
+    width: 128px; height: auto; margin: 0 auto 12px; display: block;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.3));
+  }
   .masthead .eyebrow { font-size: 12px; letter-spacing: .12em; opacity: .8; margin-bottom: 6px; }
   .masthead h1 { font-size: 23px; line-height: 1.35; text-wrap: balance; }
   .masthead .sub { font-size: 13px; opacity: .85; margin-top: 6px; }
@@ -181,6 +186,60 @@
 <div class="wrap">
 
   <header class="masthead">
+    <svg class="emblem" viewBox="0 0 200 214" role="img" aria-label="شعار عشيرة السوره ميري">
+      <!-- خلفية الشعار -->
+      <circle cx="100" cy="102" r="99" fill="#ffffff"/>
+      <defs>
+        <ellipse id="lf" cx="100" cy="14" rx="5.5" ry="13" transform="rotate(32,100,14)"/>
+      </defs>
+      <!-- إكليل الغار -->
+      <g fill="none" stroke="#1c7a34" stroke-width="3">
+        <path d="M100 190 A88 88 0 0 1 18 76"/>
+        <path d="M100 190 A88 88 0 0 0 182 76"/>
+      </g>
+      <!-- أوراق الجهة اليمنى -->
+      <g>
+        <use href="#lf" fill="#2c8c42" transform="rotate(38,100,102)"/>
+        <use href="#lf" fill="#1c7a34" transform="rotate(56,100,102)"/>
+        <use href="#lf" fill="#2c8c42" transform="rotate(74,100,102)"/>
+        <use href="#lf" fill="#1c7a34" transform="rotate(92,100,102)"/>
+        <use href="#lf" fill="#2c8c42" transform="rotate(110,100,102)"/>
+        <use href="#lf" fill="#1c7a34" transform="rotate(128,100,102)"/>
+        <use href="#lf" fill="#2c8c42" transform="rotate(146,100,102)"/>
+      </g>
+      <!-- أوراق الجهة اليسرى (مرآة) -->
+      <g transform="matrix(-1,0,0,1,200,0)">
+        <use href="#lf" fill="#2c8c42" transform="rotate(38,100,102)"/>
+        <use href="#lf" fill="#1c7a34" transform="rotate(56,100,102)"/>
+        <use href="#lf" fill="#2c8c42" transform="rotate(74,100,102)"/>
+        <use href="#lf" fill="#1c7a34" transform="rotate(92,100,102)"/>
+        <use href="#lf" fill="#2c8c42" transform="rotate(110,100,102)"/>
+        <use href="#lf" fill="#1c7a34" transform="rotate(128,100,102)"/>
+        <use href="#lf" fill="#2c8c42" transform="rotate(146,100,102)"/>
+      </g>
+      <!-- البندقية -->
+      <g stroke-linecap="round">
+        <line x1="52" y1="141" x2="60" y2="134" stroke="#6b3f1c" stroke-width="10"/>
+        <line x1="58" y1="136" x2="146" y2="67" stroke="#7a4a21" stroke-width="5.5"/>
+        <line x1="146" y1="67" x2="163" y2="54" stroke="#4a4a4a" stroke-width="3"/>
+        <line x1="112" y1="92" x2="118" y2="99" stroke="#3d3d3d" stroke-width="3"/>
+      </g>
+      <!-- السيف -->
+      <path d="M152 139 Q97 90 47 61" stroke="#aeb6bf" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M150 136 Q98 89 49 62" stroke="#e6ebf0" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <g stroke="#c9a227" stroke-linecap="round" fill="none">
+        <line x1="139" y1="143" x2="157" y2="127" stroke-width="4.5"/>
+        <path d="M153 140 q9 7 4 16" stroke-width="5.5"/>
+      </g>
+      <!-- أسماء الشعار -->
+      <g font-family="'Segoe UI',Tahoma,'Noto Sans Arabic',Arial,sans-serif" font-weight="800" text-anchor="middle" fill="#1c7a34">
+        <text x="100" y="52" font-size="25">عشيرة</text>
+        <text x="100" y="140" font-size="22">السوره ميري</text>
+      </g>
+      <!-- الشريط -->
+      <path d="M20 152 Q100 194 180 152 L174 175 Q100 213 26 175 Z" fill="#f7faf7" stroke="#1c7a34" stroke-width="3" stroke-linejoin="round"/>
+      <text x="100" y="182" font-family="'Segoe UI',Tahoma,'Noto Sans Arabic',Arial,sans-serif" font-weight="700" font-size="13.5" text-anchor="middle" fill="#222">أصالة . إباء . وفاء</text>
+    </svg>
     <div class="eyebrow">السجل الرسمي</div>
     <h1>قاعدة بيانات عشيرة السوره ميري</h1>
     <div class="sub">استمارة تسجيل الأسر (ذكور فقط) — رب الأسرة وأولاده، الهاتف، العنوان، والموقع</div>
@@ -271,6 +330,9 @@
   </section>
 
   <div class="footer-note" id="footerText">جميع البيانات تُحفظ مباشرة في قاعدة بيانات العشيرة.</div>
+  <div class="footer-note">
+    تطوير: <b>أحمد علي</b> — للتواصل: <a href="https://wa.me/9647728736250" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;text-decoration:none" dir="ltr">07728736250</a>
+  </div>
 </div>
 
 <script>
@@ -290,10 +352,13 @@
   var SHARE_MODE = /^\d{8,15}$/.test(params.get('to') || '');
   var unlocked = false;
 
+  /* رقم واتساب المشرف الافتراضي (أحمد علي) — يستخدم إذا ما كان بالرابط رقم مخصص */
+  var DEFAULT_WA = '9647728736250';
+
   function getWaNumber() {
     var p = params.get('to');
     if (p && /^\d{8,15}$/.test(p)) return p;
-    return localStorage.getItem(LS_NUM) || '';
+    return localStorage.getItem(LS_NUM) || DEFAULT_WA;
   }
 
   if (!SHARE_MODE) {

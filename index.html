@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قاعدة بيانات عشيرة السوره ميري</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a2a3a 0%, #2c4a3e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #14532d, #166534);
+      color: #fff;
+      text-align: center;
+      padding: 28px 20px;
+    }
+    .header h1 { font-size: 22px; margin-bottom: 6px; }
+    .header p  { font-size: 13px; opacity: .85; }
+
+    form { padding: 24px; }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      color: #1f2937;
+      margin: 14px 0 6px;
+    }
+    label .req { color: #dc2626; }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 15px;
+      transition: border-color .2s;
+      background: #f9fafb;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #166534;
+      background: #fff;
+    }
+    textarea { resize: vertical; min-height: 70px; }
+
+    .hint { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+    .loc-box {
+      margin-top: 8px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn-loc {
+      flex-shrink: 0;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1.5px solid #bfdbfe;
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-loc:hover { background: #dbeafe; }
+    .loc-status { font-size: 13px; color: #374151; word-break: break-all; }
+    .loc-status.ok { color: #166534; font-weight: 600; }
+
+    .btn-send {
+      width: 100%;
+      margin-top: 22px;
+      background: linear-gradient(135deg, #14532d, #166534);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn-send:hover { opacity: .92; }
+    .btn-send:disabled { opacity: .6; cursor: wait; }
+
+    .msg {
+      display: none;
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      text-align: center;
+    }
+    .msg.ok  { display: block; background: #dcfce7; color: #14532d; }
+    .msg.err { display: block; background: #fee2e2; color: #991b1b; }
+
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      padding: 0 20px 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <h1>قاعدة بيانات عشيرة السوره ميري</h1>
+    <p>استمارة تسجيل بيانات أبناء العشيرة (ذكور فقط)</p>
+  </div>
+
+  <form id="tribeForm">
+    <label>الاسم الكامل (الرباعي واللقب) <span class="req">*</span></label>
+    <input type="text" id="fullName" required placeholder="مثال: أحمد علي حسين محمد السوره ميري">
+
+    <label>رقم الهاتف <span class="req">*</span></label>
+    <input type="tel" id="phone" required inputmode="numeric" pattern="[0-9+ ]{10,15}" placeholder="مثال: 07701234567">
+    <div class="hint">رقم عراقي يبدأ بـ 07 (11 رقم)</div>
+
+    <label>العنوان (المحافظة / المنطقة) <span class="req">*</span></label>
+    <textarea id="address" required placeholder="مثال: بغداد - مدينة الصدر - قطاع 40"></textarea>
+
+    <label>الموقع الجغرافي (اختياري)</label>
+    <div class="loc-box">
+      <button type="button" class="btn-loc" id="btnLoc">📍 إرسال موقعي</button>
+      <span class="loc-status" id="locStatus">لم يتم تحديد الموقع</span>
+    </div>
+    <input type="hidden" id="lat">
+    <input type="hidden" id="lng">
+
+    <button type="submit" class="btn-send" id="btnSend">إرسال البيانات</button>
+
+    <div class="msg" id="msg"></div>
+  </form>
+
+  <div class="footer">جميع البيانات تُحفظ بشكل آمن في قاعدة بيانات العشيرة</div>
+</div>
+
+<script>
+  // ⚠️ ضع هنا رابط تطبيق Google Apps Script بعد نشره (اقرأ ملف README.md)
+  const SCRIPT_URL = "PASTE_YOUR_GOOGLE_SCRIPT_URL_HERE";
+
+  const btnLoc = document.getElementById('btnLoc');
+  const locStatus = document.getElementById('locStatus');
+
+  btnLoc.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      locStatus.textContent = 'المتصفح لا يدعم تحديد الموقع';
+      return;
+    }
+    locStatus.textContent = 'جاري تحديد الموقع...';
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        document.getElementById('lat').value = pos.coords.latitude.toFixed(6);
+        document.getElementById('lng').value = pos.coords.longitude.toFixed(6);
+        locStatus.textContent = '✅ تم تحديد الموقع بنجاح';
+        locStatus.classList.add('ok');
+      },
+      () => {
+        locStatus.textContent = 'تعذر تحديد الموقع — تأكد من تفعيل GPS والسماح للمتصفح';
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  });
+
+  document.getElementById('tribeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btnSend');
+    const msg = document.getElementById('msg');
+    msg.className = 'msg';
+
+    if (SCRIPT_URL.includes('PASTE_YOUR')) {
+      msg.textContent = 'لم يتم ربط الاستمارة بقاعدة البيانات بعد — اقرأ ملف README.md';
+      msg.classList.add('err');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'جاري الإرسال...';
+
+    const data = new FormData();
+    data.append('fullName', document.getElementById('fullName').value.trim());
+    data.append('phone',    document.getElementById('phone').value.trim());
+    data.append('address',  document.getElementById('address').value.trim());
+    data.append('lat',      document.getElementById('lat').value);
+    data.append('lng',      document.getElementById('lng').value);
+
+    try {
+      await fetch(SCRIPT_URL, { method: 'POST', body: data, mode: 'no-cors' });
+      msg.textContent = '✅ تم إرسال بياناتك بنجاح، شكراً لك';
+      msg.classList.add('ok');
+      e.target.reset();
+      locStatus.textContent = 'لم يتم تحديد الموقع';
+      locStatus.classList.remove('ok');
+      document.getElementById('lat').value = '';
+      document.getElementById('lng').value = '';
+    } catch (err) {
+      msg.textContent = '❌ حدث خطأ أثناء الإرسال، حاول مرة أخرى';
+      msg.classList.add('err');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'إرسال البيانات';
+  });
+</script>
+
+</body>
+</html>

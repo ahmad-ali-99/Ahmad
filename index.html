@@ -316,6 +316,9 @@
       <p style="color:var(--ink-soft);font-size:15px;line-height:1.9">
         شكراً لك 🌹<br>انحفظت بياناتك في قاعدة بيانات عشيرة السوره ميري
       </p>
+      <p style="background:var(--accent-soft);color:var(--accent-deep);border-radius:10px;padding:10px;font-size:13.5px;font-weight:700;margin:0 0 4px">
+        📩 انفتحت لك رسالة واتساب جاهزة للمشرف — بس اضغط زر الإرسال داخل واتساب
+      </p>
       <hr class="divider">
       <p style="font-size:14.5px;font-weight:700;line-height:2">
         إعداد وتطوير: أحمد علي<br>
@@ -672,6 +675,33 @@
     }).join(' — ');
   }
 
+  /* نص رسالة الواتساب الجاهزة */
+  function recordText(r) {
+    var t = '📋 تسجيل أسرة — عشيرة السوره ميري\n' +
+      '👤 رب الأسرة: ' + r.name + '\n' +
+      '📞 الهاتف: ' + r.phone + '\n' +
+      '🏠 العنوان: ' + r.address;
+    if (r.sons.length) {
+      t += '\n👥 الأولاد (' + r.sons.length + '):';
+      r.sons.forEach(function (s, i) {
+        t += '\n' + (i + 1) + '. ' + s.name + (s.phone ? '\n   📞 ' + s.phone : '');
+      });
+    } else {
+      t += '\n👥 الأولاد: لا يوجد';
+    }
+    var m = mapLink(r);
+    if (m) t += '\n📍 الموقع: ' + m;
+    return t;
+  }
+
+  /* فتح واتساب برسالة جاهزة لرقم المشرف — يبقى على المستخدم ضغطة إرسال فقط */
+  function openWa(text) {
+    var num = getWaNumber();
+    var url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
+    var w = window.open(url, '_blank');
+    if (!w) location.href = url;
+  }
+
   function flash(el, text, cls) {
     el.textContent = text; el.className = 'msg ' + cls;
     setTimeout(function () { el.className = 'msg'; }, 5000);
@@ -707,6 +737,10 @@
     fd.append('lat', r.lat);
     fd.append('lng', r.lng);
 
+    /* فتح واتساب فوراً بنفس ضغطة الزر (حتى لا يحجبه مانع النوافذ) */
+    openWa(recordText(r));
+
+    /* والحفظ بقاعدة جوجل يمشي بالخلفية بنفس الوقت */
     fetch(SCRIPT_URL, { method: 'POST', body: fd, mode: 'no-cors' })
       .then(function () {
         document.getElementById('regForm').classList.add('hidden');
@@ -715,7 +749,7 @@
         resetForm();
       })
       .catch(function () {
-        flash(msgEl, '❌ ماكو اتصال بالانترنت — تأكد من النت وحاول مرة ثانية', 'err');
+        flash(msgEl, '⚠️ انفتح الواتساب بس الحفظ بالقاعدة ما كمل — تأكد من النت واضغط إرسال مرة ثانية', 'err');
       })
       .finally(function () {
         btn.disabled = false;

@@ -280,23 +280,24 @@
   <!-- ========== الاستمارة ========== -->
   <section class="card" id="paneForm">
     <form id="regForm">
-      <label for="fullName" style="margin-top:0">اسم رب الأسرة الكامل (الرباعي واللقب) <span class="req">*</span></label>
-      <input type="text" id="fullName" required placeholder="مثال: أحمد علي حسين محمد السوره ميري">
+      <label for="fullName" style="margin-top:0">اسم رب الأسرة (الرباعي) <span class="req">*</span></label>
+      <input type="text" id="fullName" required autocomplete="name" placeholder="مثال: أحمد علي حسين محمد">
+      <div class="hint">لقب العشيرة «السوره ميري» ينضاف لآخر الاسم تلقائياً — لا تكتبه</div>
 
       <label for="phone">رقم هاتف رب الأسرة <span class="req">*</span></label>
       <div class="phone-row">
-        <input type="tel" id="phone" required inputmode="numeric" placeholder="مثال: 07701234567">
+        <input type="tel" id="phone" required autocomplete="tel" inputmode="numeric" placeholder="اضغط هنا ويقترح المتصفح رقمك">
         <button type="button" class="btn-pick pick-contact" data-target="phone">📇 من جهات الاتصال</button>
       </div>
       <div class="hint">رقم عراقي يبدأ بـ 07 (11 رقم)</div>
 
       <label>أولاد رب الأسرة (الذكور)</label>
-      <div class="hint" style="margin:0 0 6px">اكتب اسم كل ولد ورقمه إن وجد، واضغط «إضافة ولد» لإضافة أكثر. إذا ماكو أولاد اتركها فارغة.</div>
+      <div class="hint" style="margin:0 0 6px">اكتب <b>الاسم الأول للولد فقط</b> — اسم أبيه ولقب العشيرة ينضافون تلقائياً. إذا ماكو أولاد اتركها فارغة.</div>
       <div class="sons-box" id="sonsBox"></div>
       <button type="button" class="btn-add" id="btnAddSon">➕ إضافة ولد</button>
 
       <label for="address">العنوان (المحافظة / المنطقة) <span class="req">*</span></label>
-      <textarea id="address" required placeholder="مثال: بغداد - مدينة الصدر - قطاع 40"></textarea>
+      <textarea id="address" required autocomplete="street-address" placeholder="مثال: بغداد - مدينة الصدر - قطاع 40"></textarea>
 
       <label>الموقع الجغرافي (اختياري)</label>
       <div class="loc-box">
@@ -305,9 +306,23 @@
       </div>
 
       <button type="submit" class="btn btn-primary" id="btnSubmit">📤 إرسال البيانات</button>
-      <div class="hint" style="text-align:center;margin-top:8px">بعد الإرسال تظهر لك صفحة تأكيد الحفظ ✅ وفيها خيار إرسال نسخة على واتساب</div>
       <div class="msg" id="formMsg"></div>
     </form>
+
+    <!-- شاشة النجاح — تظهر مكان الاستمارة بعد الإرسال -->
+    <div id="successCard" class="hidden" style="text-align:center;padding:14px 0 4px">
+      <div style="font-size:58px">✅</div>
+      <h2 style="color:var(--accent);margin:12px 0 8px;font-size:22px">تم التسجيل بنجاح</h2>
+      <p style="color:var(--ink-soft);font-size:15px;line-height:1.9">
+        شكراً لك 🌹<br>انحفظت بياناتك في قاعدة بيانات عشيرة السوره ميري
+      </p>
+      <hr class="divider">
+      <p style="font-size:14.5px;font-weight:700;line-height:2">
+        إعداد وتطوير: أحمد علي<br>
+        <a href="https://wa.me/9647728736250" target="_blank" rel="noopener" dir="ltr" style="color:var(--accent);text-decoration:none;font-weight:800">📞 07728736250</a>
+      </p>
+      <button type="button" class="btn btn-ghost" id="btnAgain" style="margin-top:14px">➕ تسجيل أسرة أخرى</button>
+    </div>
   </section>
 
   <!-- ========== لوحة المشرف ========== -->
@@ -549,6 +564,36 @@
     });
   }
 
+  /* ===== تركيب الأسماء تلقائياً: اسم الأب + لقب العشيرة ===== */
+  var TRIBE = 'السوره ميري';
+
+  /* اسم الأب مع إضافة لقب العشيرة إذا ما مكتوب */
+  function fatherFullName() {
+    var n = document.getElementById('fullName').value.trim().replace(/\s+/g, ' ');
+    if (!n) return '';
+    return (n.indexOf(TRIBE) === -1) ? n + ' ' + TRIBE : n;
+  }
+
+  /* اسم الولد الكامل: اسمه الأول + اسم أبيه الكامل (وبيه لقب العشيرة) */
+  function composeSonName(typed) {
+    typed = typed.trim().replace(/\s+/g, ' ');
+    if (!typed) return '';
+    if (typed.indexOf(TRIBE) !== -1) return typed;
+    var f = fatherFullName();
+    return f ? typed + ' ' + f : typed + ' ' + TRIBE;
+  }
+
+  /* تحديث معاينة الاسم الكامل تحت كل ولد */
+  function refreshSonPreviews() {
+    document.querySelectorAll('#sonsBox .son-card').forEach(function (card) {
+      var typed = card.querySelector('.son-name').value;
+      var prev = card.querySelector('.son-preview');
+      var full = composeSonName(typed);
+      prev.textContent = full ? '✍ يُسجَّل باسم: ' + full : '';
+    });
+  }
+  document.getElementById('fullName').addEventListener('input', refreshSonPreviews);
+
   /* ===== أولاد رب الأسرة ===== */
   function addSonRow() {
     var box = document.getElementById('sonsBox');
@@ -558,17 +603,19 @@
     card.innerHTML =
       '<div class="son-head">' +
         '<span class="num">' + n + '</span>' +
-        '<input type="text" class="son-name" placeholder="اسم الولد الكامل">' +
+        '<input type="text" class="son-name" placeholder="اسم الولد فقط — مثال: كرار">' +
         '<button type="button" class="rm" title="حذف">✕</button>' +
       '</div>' +
       '<div class="phone-row">' +
         '<input type="tel" class="son-phone" inputmode="numeric" placeholder="رقم الولد إن وجد (اختياري)">' +
         '<button type="button" class="btn-pick pick-contact">📇 من جهات الاتصال</button>' +
-      '</div>';
+      '</div>' +
+      '<div class="hint son-preview" style="margin:0;color:var(--accent);font-weight:600"></div>';
     card.querySelector('.rm').addEventListener('click', function () {
       card.remove();
       renumberSons();
     });
+    card.querySelector('.son-name').addEventListener('input', refreshSonPreviews);
     box.appendChild(card);
     wirePickButtons(card);
   }
@@ -579,9 +626,9 @@
   function getSons() {
     var out = [];
     document.querySelectorAll('#sonsBox .son-card').forEach(function (card) {
-      var name = card.querySelector('.son-name').value.trim();
+      var typed = card.querySelector('.son-name').value.trim();
       var phone = card.querySelector('.son-phone').value.trim();
-      if (name) out.push({ name: name, phone: phone });
+      if (typed) out.push({ name: composeSonName(typed), phone: phone });
     });
     return out;
   }
@@ -607,7 +654,7 @@
   /* ===== قراءة الاستمارة والإرسال ===== */
   function readForm() {
     return {
-      name: document.getElementById('fullName').value.trim(),
+      name: fatherFullName(),
       phone: document.getElementById('phone').value.trim(),
       address: document.getElementById('address').value.trim(),
       sons: getSons(),
@@ -625,59 +672,61 @@
     }).join(' — ');
   }
 
-  function recordText(r) {
-    var t = '📋 تسجيل أسرة — عشيرة السوره ميري\n' +
-      '👤 رب الأسرة: ' + r.name + '\n' +
-      '📞 الهاتف: ' + r.phone + '\n' +
-      '🏠 العنوان: ' + r.address;
-    if (r.sons.length) {
-      t += '\n👥 الأولاد (' + r.sons.length + '):';
-      r.sons.forEach(function (s, i) {
-        t += '\n   ' + (i + 1) + '. ' + s.name + (s.phone ? ' — 📞 ' + s.phone : '');
-      });
-    } else {
-      t += '\n👥 الأولاد: لا يوجد';
-    }
-    var m = mapLink(r);
-    if (m) t += '\n📍 الموقع: ' + m;
-    return t;
-  }
-
   function flash(el, text, cls) {
     el.textContent = text; el.className = 'msg ' + cls;
     setTimeout(function () { el.className = 'msg'; }, 5000);
   }
 
+  function resetForm() {
+    document.getElementById('regForm').reset();
+    document.getElementById('sonsBox').innerHTML = '';
+    addSonRow();
+    curLat = ''; curLng = '';
+    var s = document.getElementById('locStatus');
+    s.textContent = 'لم يتم تحديد الموقع'; s.classList.remove('ok');
+  }
+
   /*
-   * الإرسال: نوجّه المتصفح لرابط قاعدة البيانات مباشرة مع البيانات —
-   * جوجل يحفظ السطر ويعرض للمسجّل صفحة تأكيد ✅ فيها خيار نسخة واتساب.
-   * (التوجيه المباشر يشتغل من أي استضافة، بعكس الإرسال الخفي بالخلفية)
+   * الإرسال المباشر: البيانات تنبعث لقاعدة بيانات جوجل بالخلفية بضغطة وحدة —
+   * بدون فتح واتساب وبدون مغادرة الصفحة، وتظهر شاشة «تم التسجيل».
    */
   document.getElementById('regForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var r = readForm();
     var btn = document.getElementById('btnSubmit');
+    var msgEl = document.getElementById('formMsg');
     btn.disabled = true;
-    btn.textContent = 'جاري الإرسال...';
+    btn.textContent = '⏳ جاري التسجيل...';
 
-    var q = new URLSearchParams();
-    q.set('fullName', r.name);
-    q.set('phone', r.phone);
-    q.set('address', r.address);
-    q.set('sons', sonsAsText(r.sons));
-    q.set('sonsCount', r.sons.length);
-    if (r.lat) { q.set('lat', r.lat); q.set('lng', r.lng); }
-    var waNum = getWaNumber();
-    if (waNum) q.set('to', waNum);
+    var fd = new FormData();
+    fd.append('fullName', r.name);
+    fd.append('phone', r.phone);
+    fd.append('address', r.address);
+    fd.append('sons', sonsAsText(r.sons));
+    fd.append('sonsCount', r.sons.length);
+    fd.append('lat', r.lat);
+    fd.append('lng', r.lng);
 
-    location.href = SCRIPT_URL + '?' + q.toString();
+    fetch(SCRIPT_URL, { method: 'POST', body: fd, mode: 'no-cors' })
+      .then(function () {
+        document.getElementById('regForm').classList.add('hidden');
+        document.getElementById('successCard').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        resetForm();
+      })
+      .catch(function () {
+        flash(msgEl, '❌ ماكو اتصال بالانترنت — تأكد من النت وحاول مرة ثانية', 'err');
+      })
+      .finally(function () {
+        btn.disabled = false;
+        btn.textContent = '📤 إرسال البيانات';
+      });
   });
 
-  /* إذا رجع المستخدم من صفحة التأكيد (زر رجوع)، نرجّع زر الإرسال لحالته الطبيعية */
-  window.addEventListener('pageshow', function () {
-    var btn = document.getElementById('btnSubmit');
-    btn.disabled = false;
-    btn.textContent = '📤 إرسال البيانات';
+  /* تسجيل أسرة أخرى */
+  document.getElementById('btnAgain').addEventListener('click', function () {
+    document.getElementById('successCard').classList.add('hidden');
+    document.getElementById('regForm').classList.remove('hidden');
   });
 
   /* ===== إعدادات المشرف ===== */

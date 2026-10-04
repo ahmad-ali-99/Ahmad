@@ -396,7 +396,7 @@ p{margin:0 0 1em}
   .arrows{display:none}
   .features-bar .container{grid-template-columns:1fr}
   .fb-item+.fb-item{border-inline-start:0;border-top:1px solid var(--line)}
-  .services-grid,.projects-grid,.types-grid,.vmv,.why-grid,.values-grid,.comp-grid,.contact-cards,.footer-main{grid-template-columns:1fr}
+  .services-grid,.projects-grid,.types-grid,.vmv,.why-grid,.values-grid,.comp-grid,.contact-cards{grid-template-columns:1fr}
   .checks,.types-mini,.row2{grid-template-columns:1fr}
   .steps{grid-template-columns:1fr;row-gap:28px}
   .steps li{padding-top:0;padding-inline-start:66px;min-height:48px}
@@ -405,6 +405,10 @@ p{margin:0 0 1em}
   .calc-in,.calc-out,.form-box,.map-box .in{padding:28px 20px}
   .res b{font-size:24px}
   .cta .container{flex-direction:column;align-items:flex-start}
+  .warranty b{font-size:21px}
+  .warranty div{padding:22px 12px}
+  .footer-main{grid-template-columns:1fr 1fr;gap:36px 24px;padding-block:56px 40px}
+  .footer-about,.footer-main>div:last-child{grid-column:1/-1}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;animation:none!important}

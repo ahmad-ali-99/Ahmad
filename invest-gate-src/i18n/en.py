@@ -182,3 +182,25 @@ C = {
  'hours': [('Saturday – Wednesday', '8:30 AM – 5:00 PM'), ('Thursday', '8:30 AM – 2:00 PM'), ('Friday', 'Closed')],
  'map_btn': 'View on Map',
 }
+
+C.update({
+ 'hero_lines': ['Your gateway to', 'trade, construction', 'and clean energy'],
+ 'hero_sub': 'An Iraqi company providing vehicle trading, international shipping, land transport, construction contracting and solar energy systems, under one management and one point of responsibility.',
+ 'founded_line': 'Founded in Baghdad, 2012',
+ 'scroll': 'Scroll',
+ 'menu': 'Menu', 'close': 'Close',
+ 'intro_statement': 'Since 2012, Invest Gate has shortened the path for its clients: we import goods, ship them and deliver them to site, then build those sites and power them with solar energy, on a clear schedule and at a written price.',
+ 'intro_link': 'About the company',
+ 'sectors_hint': 'Six integrated divisions under one management.',
+ 'numbers_title': 'Figures from twelve years of work',
+ 'solar_scroll_hint': 'Drag or scroll to explore the systems',
+ 'view': 'View',
+ 'all_services': 'All services',
+ 'back_top': 'Back to top',
+ 'call_us': 'Call us', 'write_us': 'Write to us',
+ 'side_nav': 'Divisions',
+ 'nf_title': 'Page not found', 'nf_text': 'This page may have moved, or the link may be incorrect.', 'nf_btn': 'Back to home',
+ 'offices': 'Our offices',
+ 'follow': 'Follow us',
+ 'quote_title': 'Tell us what you need',
+})

@@ -56,7 +56,7 @@ def font_file(family_tag, weight=None):
         if block.startswith(family_tag) and (weight is None or f'font-weight: {weight};' in block):
             return re.search(r'url\(\.\./fonts/([^)]+)\)', block).group(1)
 PRELOAD = {
-    'rtl': [font_file('Noto+Naskh+Arabic arabic'), font_file('IBM+Plex+Sans+Arabic arabic', 400)],
+    'rtl': [font_file('Amiri arabic', 700), font_file('IBM+Plex+Sans+Arabic arabic', 400)],
     'ltr': [font_file('Playfair+Display latin '), font_file('IBM+Plex+Sans latin ')],
 }
 
